@@ -16,13 +16,39 @@ return {
         notify_opts
       )
     end)
+    -- origin: 原始安装命令：上游修复合并后可恢复此段
+    -- assert(
+    --   task:spawn("uv", {
+    --     args = { "tool", "install", "--upgrade", "--python", "3.12", "--reinstall-package", "vectorcode", "." },
+    --     cwd = plugin.dir,
+    --     timeout = 30 * 60 * 1000, -- 单位ms；延长超时以等待依赖下载
+    --   }),
+    --   "uv tool install 失败"
+    -- )
+    -- endorigin
+    -- fix: 规避 tree-sitter 0.26.0 的 Point 堆损坏及随机段错误，以及新版解析器包异常未捕获问题；待上游修复后移除此段。
     assert(
       task:spawn("uv", {
-        args = { "tool", "install", "--upgrade", "--python", "3.12", "--reinstall-package", "vectorcode", "." },
+        args = {
+          "tool",
+          "install",
+          "--upgrade",
+          "--python",
+          "3.12",
+          "--reinstall-package",
+          "vectorcode",
+          "--with",
+          "tree-sitter==0.25.2",
+          "--with",
+          "tree-sitter-language-pack==0.13.0",
+          ".",
+        },
         cwd = plugin.dir,
+        timeout = 30 * 60 * 1000, -- 单位毫秒；首次下载较大依赖时允许等待 30 分钟。
       }),
       "uv tool install 失败"
     )
+  -- endfix
   end or false,
   opts = function()
     local cli = "vectorcode"
